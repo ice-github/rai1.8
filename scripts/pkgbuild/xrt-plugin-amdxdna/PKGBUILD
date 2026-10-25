@@ -1,0 +1,48 @@
+# Adapted from amd/xdna-driver build/arch/PKGBUILD-xrt-plugin; see
+# THIRD_PARTY_NOTICES.md and the license at the pinned upstream commit.
+# Validated against xdna-driver commit 88dda53eee336c998abca38c71d5bc79fb3633b8.
+# Fixed for CachyOS / in-tree amdxdna + -nokmod SHIM build
+# Differences from upstream build/arch/PKGBUILD-xrt-plugin:
+#   - no dkms / linux-headers dependency (kernel module comes from in-tree amdxdna)
+#   - no .install hook and no postinst/prerm copies (they run dkms/rmmod)
+#   - options=('!strip' '!debug') so makepkg does not corrupt xrt_smi_*.a VTD archives
+#   - chmod -R go-w so pacman does not warn about group-writable files
+pkgname=xrt-plugin-amdxdna
+pkgrel=1
+pkgdesc="AMD XDNA Driver plugin for Xilinx RunTime (userspace only, no kernel module)"
+arch=('x86_64')
+url="https://github.com/amd/xdna-driver"
+license=('Apache-2.0')
+depends=('xrt-base' 'xrt-npu')
+provides=('xrt-plugin-amdxdna')
+conflicts=('amdxdna-driver' 'amdxdna-driver-bin')
+options=('!strip' '!debug')
+
+: ${XDNA_BUILD_DIR:="../Release"}
+if [[ ${XDNA_BUILD_DIR} = /* ]]; then
+  _build_dir=${XDNA_BUILD_DIR}
+else
+  _build_dir="$startdir/${XDNA_BUILD_DIR}"
+fi
+
+_tarball=$(ls "${_build_dir}"/xrt_plugin*-amdxdna.tar.gz 2>/dev/null | head -1)
+pkgver=${_tarball#*xrt_plugin.}
+pkgver=${pkgver%%_*}
+
+package() {
+  cd "$srcdir"
+
+  local _nullglob_set=$(shopt -p nullglob)
+  shopt -s nullglob
+  local tarballs=("${_build_dir}"/xrt_plugin*-amdxdna.tar.gz)
+  $_nullglob_set
+  if (( ${#tarballs[@]} == 0 )) || [[ ! -f ${tarballs[0]} ]]; then
+    error "XDNA plugin tarball not found in ${XDNA_BUILD_DIR}"
+    error "Build the plugin first: cd build && ./build.sh -release -nokmod"
+    return 1
+  fi
+
+  msg2 "Extracting ${tarballs[0]}"
+  tar -xzf "${tarballs[0]}" -C "$pkgdir"
+  chmod -R go-w "$pkgdir"
+}

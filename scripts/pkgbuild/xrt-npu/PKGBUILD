@@ -1,0 +1,27 @@
+# Adapted from Xilinx/XRT build/arch/PKGBUILD-xrt-npu (Apache-2.0); see
+# THIRD_PARTY_NOTICES.md. Validated against XRT commit 0026185de81a179dc7d886197d3e35f9a179b4e8.
+# Fixed for CachyOS / source build (2.25 pinned commit)
+# Differences from upstream build/arch/PKGBUILD-xrt-npu:
+#   - CPack output name includes VERSION_ID on Arch/CachyOS, so glob it.
+pkgname=xrt-npu
+pkgver=202620.2.25.0
+pkgrel=1
+pkgdesc="Xilinx RunTime - NPU package"
+arch=('x86_64')
+url="https://github.com/Xilinx/XRT"
+license=('Apache-2.0')
+depends=("xrt-base>=${pkgver}")
+provides=("${pkgname}=${pkgver}")
+conflicts=('xrt')
+options=('!debug')
+
+package() {
+  local tarballs=("${XRT_BUILD_DIR:-$startdir/../Release}"/xrt_${pkgver}_*--npu.tar.gz)
+  if (( ${#tarballs[@]} == 0 )) || [[ ! -f ${tarballs[0]} ]]; then
+    error "xrt npu tarball not found in ${XRT_BUILD_DIR:-$startdir/../Release}"
+    return 1
+  fi
+  msg2 "Extracting ${tarballs[0]}"
+  tar -xzf "${tarballs[0]}" -C "$pkgdir"
+  chmod -R go-w "$pkgdir"
+}
