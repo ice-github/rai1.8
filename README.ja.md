@@ -34,6 +34,21 @@
 
 モデル読み込みの内訳はrunnerのロード要約、Pipeline executionと全体時間は別の計測点の値です。各区間は全体時間を分割した排他的な内訳ではなく、単純加算できません。ハードウェア、起動状態、環境により変動します。
 
+### Pipeline executionのプロファイル内訳
+
+保存済みORT profileの`model_run`とproviderイベントから、pipeline呼び出し内の実行をさらに分けられます。
+
+| コンポーネント | ORT model_run時間 | providerイベント時間（累積） | 呼び出し・イベント数 |
+|---|---:|---:|---:|
+| Text encoder（CPU） | 2.499秒 | CPU 2.495秒 | 1 run / 666 events |
+| Transformer | 8.031秒 | NPU 7.998秒、CPU 0.012秒 | 4 runs（各2.315 / 1.897 / 1.912 / 1.906秒）、NPU 32 events |
+| VAE decoder | 0.892秒 | NPU 0.881秒、CPU 0.010秒 | 1 run / NPU 4 events |
+| ORT model_run合計 | 11.422秒 | — | 各sessionのrun時間を合算 |
+| Pipeline execution全体 | 11.553秒 | — | runner計測 |
+| 差分（概算） | 約0.131秒 | — | pipeline計測とORT run合計の差 |
+
+ORT providerイベント時間はprofile内の累積値で、実時間の独立した区間として`model_run`に加算するものではありません。約0.131秒の差分も、タイマー境界・pipeline側の処理等を含む単純差であり、厳密な独立ステージ計測ではありません。プロファイル値は単一実行の参考値です。
+
 ## 必要ストレージの目安
 
 | ローカル作業データ（実測） | 使用量の目安 |
@@ -51,8 +66,9 @@
 1. [前提条件と安全方針](docs/prerequisites.md)
 2. [XRT/SHIMの取得・ビルド](docs/build-runtime.md)
 3. [隔離配置とランタイム検証](docs/runtime-checks.md)
-4. [SDKの公式取得と隔離セットアップ](docs/sdk.md)
-5. [FLUX.2の準備と実行](docs/flux2.md)
+4. [AMDから取得するファイル一覧](docs/amd-downloads.md)
+5. [SDKの公式取得と隔離セットアップ](docs/sdk.md)
+6. [FLUX.2の準備と実行](docs/flux2.md)
 
 ローカルでビルドしたパッケージを`pacman -U`で導入する手順はありません。ユーザー所有ディレクトリに展開して使う構成です。in-treeドライバー向けの`-nokmod`構成を、別管理のカーネルモジュールと併用する場合は競合を確認してください。
 

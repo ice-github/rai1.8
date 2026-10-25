@@ -27,7 +27,8 @@ unverified. See [validation](docs/verification.md).
 | Model-load summary: CPU / NPU | 0.88 s / 4.59 s |
 
 Per-component model-load timings and measurement caveats are in the [Japanese
-validation record](docs/verification.md#処理時間の内訳).
+validation record](docs/verification.md#処理時間の内訳). See also the [detailed
+pipeline profile breakdown](docs/verification.md#pipeline-execution-breakdown).
 
 ## Storage estimate
 
@@ -47,8 +48,9 @@ build trees, or caches can require more. See [prerequisites](docs/prerequisites.
 
 1. Read [prerequisites and safety](docs/prerequisites.md).
 2. Follow [runtime build](docs/build-runtime.md), then [isolated runtime checks](docs/runtime-checks.md).
-3. For the SDK, follow [official acquisition and isolated setup](docs/sdk.md).
-4. For FLUX.2, follow [model/source preparation and inference](docs/flux2.md).
+3. Check [which AMD downloads are needed](docs/amd-downloads.md).
+4. For the SDK, follow [official acquisition and isolated setup](docs/sdk.md).
+5. For FLUX.2, follow [model/source preparation and inference](docs/flux2.md).
 
 No step requires installing the locally built packages with `pacman -U`.
 The documented runtime can be unpacked under a user-owned work directory.

@@ -33,6 +33,21 @@
 
 ロード要約のCPU/NPU時間はモデルロード区間の集計です。pipeline時間およびプロセス全体時間は異なる計測点・範囲で計測されているため、同じ時間軸の排他的な内訳ではなく、足し合わせて全体時間を求めることはできません。単一実行の参考値であり、再現時の速度保証ではありません。
 
+## Pipeline execution breakdown
+
+保存されていたORT profileから、各`model_run`区間とproviderイベントの累積時間を集計した。条件は上記と同じ。
+
+| コンポーネント | ORT `model_run` | provider event累積時間 | 回数 / event数 |
+|---|---:|---:|---:|
+| Text encoder（CPU） | 2.499秒 | CPU 2.495秒 | 1回 / 666 events |
+| Transformer | 8.031秒 | RyzenAI NPU 7.998秒、CPU 0.012秒 | 4回（2.315 / 1.897 / 1.912 / 1.906秒）/ NPU 32 events |
+| VAE decoder | 0.892秒 | RyzenAI NPU 0.881秒、CPU 0.010秒 | 1回 / NPU 4 events |
+| **ORT `model_run`合計** | **11.422秒** | — | 3 session componentの合算 |
+| **Pipeline execution** | **11.553秒** | — | runnerが計測したpipeline全体 |
+| 差分（単純差） | 約0.131秒 | — | pipeline全体 − ORT `model_run`合計 |
+
+Transformerの4回は4 inference stepsに対応する。provider eventのdurationsはORT profileに記録されたイベント時間の累積であり、`model_run`に足し合わせる追加時間ではない。pipelineとの差分は異なる計測境界の単純差で、独立した「その他処理時間」を直接計測した値ではない。いずれも単一runのprofile値であり、精密なbenchmarkではない。
+
 ## 限界
 
 - 1台・1回のFLUX生成に基づく。再起動後、反復安定性、suspend/resume、他のCachyOS/kernel/firmwareでは未検証。
