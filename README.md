@@ -20,6 +20,15 @@ encoder ran on CPU. This is a **single-host, point-in-time result**, not an
 AMD/CachyOS support statement. Reboot and repeated-run stability tests remain
 unverified. See [validation](docs/verification.md).
 
+| Timing (single run) | Duration |
+|---|---:|
+| End-to-end process | 21.233 s |
+| Pipeline execution | 11.553 s |
+| Model-load summary: CPU / NPU | 0.88 s / 4.59 s |
+
+Per-component model-load timings and measurement caveats are in the [Japanese
+validation record](docs/verification.md#処理時間の内訳).
+
 ## Start here
 
 1. Read [prerequisites and safety](docs/prerequisites.md).
