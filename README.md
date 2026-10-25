@@ -29,6 +29,20 @@ unverified. See [validation](docs/verification.md).
 Per-component model-load timings and measurement caveats are in the [Japanese
 validation record](docs/verification.md#処理時間の内訳).
 
+## Storage estimate
+
+| Local work data (observed) | Approx. size |
+|---|---:|
+| Ryzen AI SDK distribution files + venv | 31.4 GiB |
+| FLUX.2 model, venv, source and local runtime data | 13 GiB |
+| XRT/SHIM sources, build outputs and other validation files | 2.4 GiB |
+| Isolated XRT runtime | 0.23 GiB |
+| **Observed total** | **about 47 GiB** |
+
+For a fresh reproduction, reserve **at least 60–70 GiB free** to allow for
+download archives and temporary extraction/build space. Keeping extra archives,
+build trees, or caches can require more. See [prerequisites](docs/prerequisites.md).
+
 ## Start here
 
 1. Read [prerequisites and safety](docs/prerequisites.md).
