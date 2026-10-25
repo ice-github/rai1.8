@@ -5,13 +5,15 @@ adapted Arch PKGBUILDs only**. It is not an AMD distribution and does not
 include or redistribute AMD installers, SDKs, wheels, libraries, firmware,
 model weights, transaction archives, or upstream source trees.
 
+[日本語版 README](README.ja.md)
+
 Documentation and scripts are primarily Japanese, matching the original
 validation notes. Contributions and corrections are welcome.
 
 ## What was validated
 
-On one CachyOS system with an in-tree `amdxdna` driver and Ryzen AI 7 350,
-XRT/SHIM built from the pinned sources, NPU enumeration/basic tests, the Ryzen
+On one CachyOS system (**kernel `7.3.0-5-cachyos`**) with an in-tree
+`amdxdna` driver and Ryzen AI 7 350, XRT/SHIM built from the pinned sources, NPU enumeration/basic tests, the Ryzen
 AI SDK quicktest, and one FLUX.2 klein 4B image generation were verified.
 ORT profiles showed NPU events for Transformer (32) and VAE (4); the text
 encoder ran on CPU. This is a **single-host, point-in-time result**, not an

@@ -2,8 +2,8 @@
 
 ## 対象と結果
 
-2026-10-25時点で、1台のCachyOS x86_64機（AMD Ryzen AI 7 350 / in-tree
-`amdxdna` / XRT 2.25.0）にて以下を確認した。
+2026-10-25時点で、1台のCachyOS x86_64機（kernel
+`7.3.0-5-cachyos` / AMD Ryzen AI 7 350 / in-tree `amdxdna` / XRT 2.25.0）にて以下を確認した。
 
 - XRT pinned source build: 110 tests中108 PASS、2 SKIP、0 FAIL。
 - XDNA userspace SHIM: `-release -nokmod` でbuild。
