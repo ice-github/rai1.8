@@ -62,8 +62,10 @@ managed kernel module without reviewing conflicts first.
 - `scripts/pkgbuild/`: CachyOS-oriented PKGBUILDs for XRT base, NPU, and the
   userspace XDNA plugin. They consume locally built upstream tarballs; they do
   not download or bundle AMD/Xilinx payloads.
-- `scripts/flux2/`: source preparation, pinned model downloader, bundle-key
-  normalization, memory monitor, environment wrappers, runner, and verifier.
+- `scripts/genai_sd/`: shared runtime preparation, bundle normalization,
+  compatibility patches, CPU T5, JSON CLI, and execution evidence verifier.
+- `scripts/flux2/`: FLUX.2 preparation and workflow wrappers that use the
+  shared `genai_sd` tool package.
 - `docs/`: acquisition links, reproducible commands, caveats, and summarized
   evidence.
 - `THIRD_PARTY_NOTICES.md`: upstream links and licensing boundaries.

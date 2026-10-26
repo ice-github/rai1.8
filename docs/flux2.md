@@ -9,6 +9,8 @@ REPO=/path/to/rai1.8
 WORK="$HOME/rai18-work/cachyos"
 mkdir -p "$WORK/flux2"
 cp -a "$REPO/scripts/flux2/." "$WORK/flux2/"
+mkdir -p "$WORK/flux2/tools"
+cp -a "$REPO/scripts/genai_sd" "$WORK/flux2/tools/"
 # Place the isolated runtime at $WORK/runtime and SDK venv at $WORK/sdk/venv.
 ```
 
@@ -62,9 +64,9 @@ Check then normalize the pinned model's BXI0 index keys when required:
 
 ```bash
 find "$WORK/flux2/models/amd_FLUX.2-klein-4B-amdnpu" -name '*.ddbundle' -print0 \
-  | xargs -0 python "$WORK/flux2/bundle_aliases.py" --check
+  | xargs -0 python "$WORK/flux2/tools/genai_sd/bundle_aliases.py" --check
 find "$WORK/flux2/models/amd_FLUX.2-klein-4B-amdnpu" -name '*.ddbundle' -print0 \
-  | xargs -0 python "$WORK/flux2/bundle_aliases.py" \
+  | xargs -0 python "$WORK/flux2/tools/genai_sd/bundle_aliases.py" \
       --manifest "$WORK/flux2/linux-bundle-aliases.json"
 ```
 

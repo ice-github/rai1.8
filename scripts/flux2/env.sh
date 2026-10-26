@@ -9,5 +9,5 @@ export RYZENAI_GENAI_SD_MODELS_ROOT="$_flux_root/models"
 export DD_PLUGINS_ROOT="$_flux_root/lib/transaction/stx"
 export DD_ROOT="$_flux_root/lib"
 export LD_LIBRARY_PATH="$XILINX_XRT/lib:$_flux_root/../sdk/libcompat:$_sp/flexml/flexml_extras/lib:$_sp/onnxruntime/capi:$_sp/voe/lib:$_venv/deployment/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-export PYTHONPATH="$_flux_root/source-linux:$XILINX_XRT/python${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$_flux_root/tools:$_flux_root/source-linux:$XILINX_XRT/python${PYTHONPATH:+:$PYTHONPATH}"
 unset _flux_root _venv _sp

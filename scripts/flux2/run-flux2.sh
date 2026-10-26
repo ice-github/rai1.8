@@ -30,7 +30,7 @@ check() {
   done
   local -a bundle_paths=()
   mapfile -d '' bundle_paths < <(find "$MODEL" -name '*.ddbundle' -type f -print0)
-  "$VIRTUAL_ENV/bin/python" "$ROOT/bundle_aliases.py" --check "${bundle_paths[@]}" || { echo "ERROR: bundle shape-key normalization is incomplete" >&2; return 1; }
+  "$VIRTUAL_ENV/bin/python" "$ROOT/tools/genai_sd/bundle_aliases.py" --check "${bundle_paths[@]}" || { echo "ERROR: bundle shape-key normalization is incomplete" >&2; return 1; }
   "$VIRTUAL_ENV/bin/python" -c 'import onnxruntime as o, torch, diffusers, transformers; assert "VitisAIExecutionProvider" in o.get_available_providers(); print("Python imports/providers OK:", o.__version__, o.get_available_providers())'
   [[ -f "$VIRTUAL_ENV/lib/python3.12/site-packages/voe/lib/libonnxruntime_providers_ryzenai.so" ]] || { echo "ERROR: RyzenAI custom EP library missing" >&2; return 1; }
   LC_ALL=C LANGUAGE=C "$XILINX_XRT/bin/xrt-smi" examine --batch
@@ -39,6 +39,8 @@ check() {
 
 if [[ "$mode" == check ]]; then check; exit $?; fi
 check
+exec 9>"$ROOT/.genai_sd.lock"
+flock -x 9
 STAMP="$(date +%Y%m%d-%H%M%S)-$$"
 OUT="$ROOT/results/$STAMP"
 mkdir -p "$OUT/images" "$OUT/profiles"
@@ -59,7 +61,7 @@ cmd=("$VIRTUAL_ENV/bin/python" "$SOURCE/test/run.py" --model_id "$MODEL_ID" --re
 } | tee "$OUT/run.log"
 start=$(date +%s)
 set +e
-"$VIRTUAL_ENV/bin/python" "$ROOT/measure_memory.py" \
+"$VIRTUAL_ENV/bin/python" "$ROOT/tools/genai_sd/measure_memory.py" \
   --csv "$OUT/memory.csv" --summary "$OUT/memory-summary.json" \
   --interval 0.2 --min-available-gib 2 --timeout 1800 -- "${cmd[@]}" \
   2>&1 | tee -a "$OUT/run.log"
@@ -71,7 +73,7 @@ if ((rc != 0)); then
   printf '{"status":"inference_failed","exit_code":%d,"duration_seconds":%d}\n' "$rc" "$elapsed" > "$OUT/completed.json"
   exit "$rc"
 fi
-if ! "$VIRTUAL_ENV/bin/python" "$ROOT/verify_result.py" "$OUT"; then
+if ! "$VIRTUAL_ENV/bin/python" "$ROOT/tools/genai_sd/evidence.py" "$OUT"; then
   printf '{"status":"image_generated_npu_dispatch_unverified","exit_code":1,"duration_seconds":%d}\n' "$elapsed" > "$OUT/completed.json"
   exit 1
 fi

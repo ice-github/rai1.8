@@ -5,17 +5,25 @@ from __future__ import annotations
 
 import json
 import sys
+import argparse
 from pathlib import Path
 
 from PIL import Image, ImageStat
 
-root = Path(sys.argv[1]).resolve()
+parser = argparse.ArgumentParser()
+parser.add_argument("work_dir", type=Path)
+parser.add_argument("--npu-component", choices=("transformer", "unet"), default="transformer")
+parser.add_argument("--vae-component", choices=("vae_decoder",), default="vae_decoder")
+parser.add_argument("--width", type=int, default=1024)
+parser.add_argument("--height", type=int, default=1024)
+args = parser.parse_args()
+root = args.work_dir.resolve()
 images = sorted((root / "images").glob("*.png"))
 if len(images) != 1:
     raise SystemExit(f"expected exactly one PNG, found {len(images)}")
 with Image.open(images[0]) as im:
     im.load()
-    if im.size != (1024, 1024):
+    if im.size != (args.width, args.height):
         raise SystemExit(f"wrong image dimensions: {im.size}")
     stat = ImageStat.Stat(im.convert("RGB"))
     if max(stat.stddev) < 2.0:
@@ -31,12 +39,12 @@ def session_for(name: str):
         matches = [s for s in sessions if name in str(s.get("component", "")).lower()]
     return matches
 
-transformer = session_for("transformer")
-vae = session_for("vae_decoder")
+npu_model = session_for(args.npu_component)
+vae = session_for(args.vae_component)
 text = session_for("text_encoder")
-if not transformer or not vae:
-    raise SystemExit(f"missing Transformer/VAE session records; sessions={sessions}")
-for label, group in (("Transformer", transformer), ("VAE", vae)):
+if not npu_model or not vae:
+    raise SystemExit(f"missing {args.npu_component}/VAE session records; sessions={sessions}")
+for label, group in ((args.npu_component, npu_model), (args.vae_component, vae)):
     if not any("RyzenAILightExecutionProvider" in s.get("providers", []) for s in group):
         raise SystemExit(f"{label} session did not include RyzenAILightExecutionProvider")
 if text and not any("CPUExecutionProvider" in s.get("providers", []) for s in text):
@@ -56,7 +64,7 @@ if profile_list.exists():
 if not profile_paths:
     profile_paths = [(p.name, p) for p in (root / "profiles").glob("*.json")]
 
-dispatch = {"transformer": [], "vae_decoder": [], "profiles": []}
+dispatch = {args.npu_component: [], args.vae_component: [], "profiles": []}
 for component, path in profile_paths:
     if not path.is_file():
         continue
@@ -66,34 +74,38 @@ for component, path in profile_paths:
         raise SystemExit(f"cannot parse ORT profile {path}: {exc}")
     npu_events = []
     for event in events:
-        args = event.get("args", {}) if isinstance(event, dict) else {}
-        provider = str(args.get("provider", ""))
+        event_args = event.get("args", {}) if isinstance(event, dict) else {}
+        provider = str(event_args.get("provider", ""))
         if provider == "RyzenAILightExecutionProvider":
             npu_events.append({"name": event.get("name"), "cat": event.get("cat")})
     lower = (component + " " + path.name).lower()
-    key = "vae_decoder" if "vae" in lower else "transformer" if "transformer" in lower else None
+    key = (args.vae_component if args.vae_component in lower
+           else args.npu_component if args.npu_component in lower else None)
     if key:
         dispatch[key].extend(npu_events)
         dispatch["profiles"].append({"component": component, "path": str(path), "npu_events": len(npu_events)})
 
-if not dispatch["transformer"] or not dispatch["vae_decoder"]:
+if not dispatch[args.npu_component] or not dispatch[args.vae_component]:
     raise SystemExit(f"NPU dispatch events not verified for both components: {dispatch}")
 
 evidence = {
     "status": "image_generated_npu_dispatch_verified",
     "image": str(images[0]),
-    "image_size": [1024, 1024],
+    "image_size": [args.width, args.height],
     "image_rgb_stddev": stat.stddev,
     "sessions": sessions,
     "dispatch": {
-        "transformer_event_count": len(dispatch["transformer"]),
-        "vae_event_count": len(dispatch["vae_decoder"]),
+        "npu_component": args.npu_component,
+        "npu_event_count": len(dispatch[args.npu_component]),
+        "transformer_event_count": len(dispatch.get("transformer", [])),
+        "vae_event_count": len(dispatch[args.vae_component]),
         "profile_files": dispatch["profiles"],
-        "transformer_events_sample": dispatch["transformer"][:5],
-        "vae_events_sample": dispatch["vae_decoder"][:5],
+        "npu_events_sample": dispatch[args.npu_component][:5],
+        "transformer_events_sample": dispatch.get("transformer", [])[:5],
+        "vae_events_sample": dispatch[args.vae_component][:5],
     },
 }
 (root / "dispatch-evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
-print(f"Image: {images[0]} ({Image.open(images[0]).size[0]}x1024)")
-print("Transformer NPU events:", len(dispatch["transformer"]))
-print("VAE NPU events:", len(dispatch["vae_decoder"]))
+print(f"Image: {images[0]} ({args.width}x{args.height})")
+print(f"{args.npu_component} NPU events:", len(dispatch[args.npu_component]))
+print("VAE NPU events:", len(dispatch[args.vae_component]))
